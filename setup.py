@@ -71,12 +71,23 @@ version_info = ({})
     version_file_str = content.format(time.asctime(), SHORT_VERSION, sha, VERSION_INFO)
     with open(version_file, 'w') as f:
         f.write(version_file_str)
+    print(f"Written version file content:\n{version_file_str}")
+
 
 
 def get_version():
-    with open(version_file, 'r') as f:
-        exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+    try:
+        with open(version_file, 'r') as f:
+            content = f.read()
+            globals_dict = {}
+            exec(compile(content, version_file, 'exec'), globals_dict)
+        return globals_dict['__version__']
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Version file '{version_file}' not found. Please ensure it is created.")
+    except KeyError:
+        with open(version_file, 'r') as f:
+            print(f"Version file content:\n{f.read()}")
+        raise KeyError(f"__version__ not found in the version file '{version_file}'.")
 
 
 def make_cuda_ext(name, module, sources, sources_cuda=None):
